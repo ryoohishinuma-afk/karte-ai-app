@@ -40,19 +40,19 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
 
   const approvedCount = consultations.filter(c => c.is_approved).length
 
-  if (loading) return <p style={{ color: '#94a3b8', fontSize: 13 }}>読み込み中...</p>
+  if (loading) return <p style={{ color: 'var(--text-faint)', fontSize: 13 }}>読み込み中...</p>
 
   return (
     <div>
       {/* 再学習パネル */}
-      <div style={{ marginBottom: 20, padding: 14, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10 }}>
+      <div style={{ marginBottom: 20, padding: 14, background: 'var(--accent-weak)', border: '1px solid var(--accent-line)', borderRadius: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#16a34a', marginBottom: 2 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', marginBottom: 2 }}>
               <Brain size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
               承認済みカルテから再学習
             </p>
-            <p style={{ fontSize: 12, color: '#64748b' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               ✓ マークしたカルテ {approvedCount}件 が再学習に使われます
             </p>
           </div>
@@ -67,7 +67,7 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
           </button>
         </div>
         {relearningMsg && (
-          <p style={{ fontSize: 12, marginTop: 8, color: relearningMsg.startsWith('✓') ? '#16a34a' : '#dc2626' }}>
+          <p style={{ fontSize: 12, marginTop: 8, color: relearningMsg.startsWith('✓') ? 'var(--primary)' : 'var(--danger)' }}>
             {relearningMsg}
           </p>
         )}
@@ -75,7 +75,7 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
 
       {/* ログ一覧 */}
       {consultations.length === 0 ? (
-        <p style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: 24 }}>
+        <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: 24 }}>
           生成ログがまだありません
         </p>
       ) : (
@@ -85,31 +85,31 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
               key={c.id}
               style={{
                 padding: '12px 14px',
-                background: '#fff',
-                border: `1px solid ${c.is_approved ? '#bbf7d0' : '#e2e8f0'}`,
+                background: 'var(--surface)',
+                border: `1px solid ${c.is_approved ? 'var(--accent-weak)' : 'var(--border)'}`,
                 borderRadius: 8,
-                borderLeft: `3px solid ${c.is_approved ? '#16a34a' : '#cbd5e1'}`,
+                borderLeft: `3px solid ${c.is_approved ? 'var(--primary)' : 'var(--border)'}`,
               }}
             >
               {/* ヘッダー */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                     {new Date(c.created_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                   {c.chief_complaint && (
-                    <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, background: 'var(--accent-weak)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>
                       {c.chief_complaint}
                     </span>
                   )}
                   {c.patient_age && (
-                    <span style={{ fontSize: 11, color: '#64748b' }}>{c.patient_age}歳 / {c.patient_gender}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.patient_age}歳 / {c.patient_gender}</span>
                   )}
                   {c.is_approved && (
-                    <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 700 }}>✓ 承認済み</span>
+                    <span style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700 }}>✓ 承認済み</span>
                   )}
                   {c.corrected_karte && (
-                    <span style={{ fontSize: 11, color: '#7c3aed', fontWeight: 600 }}>✎ 修正あり</span>
+                    <span style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 600 }}>✎ 修正あり</span>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
@@ -118,9 +118,9 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
                     title={c.is_approved ? '承認取り消し' : '承認する'}
                     onClick={() => approveConsultation(c.id, !c.is_approved)}
                     style={{
-                      background: c.is_approved ? '#dcfce7' : 'none',
-                      border: `1px solid ${c.is_approved ? '#86efac' : '#e2e8f0'}`,
-                      borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: c.is_approved ? '#16a34a' : '#94a3b8',
+                      background: c.is_approved ? 'var(--accent-weak)' : 'none',
+                      border: `1px solid ${c.is_approved ? 'var(--accent-line)' : 'var(--border)'}`,
+                      borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: c.is_approved ? 'var(--primary)' : 'var(--text-faint)',
                     }}
                   >
                     <Check size={12} />
@@ -129,7 +129,7 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
                     type="button"
                     title="修正・編集"
                     onClick={() => editingId === c.id ? setEditingId(null) : startEdit(c)}
-                    style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#64748b' }}
+                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--text-muted)' }}
                   >
                     <Pencil size={12} />
                   </button>
@@ -137,7 +137,7 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
                     type="button"
                     title="削除"
                     onClick={() => { if (window.confirm('このログを削除しますか？')) deleteConsultation(c.id) }}
-                    style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: '#cbd5e1' }}
+                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--border)' }}
                   >
                     <Trash2 size={12} />
                   </button>
@@ -164,7 +164,7 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
                   </div>
                 </div>
               ) : (
-                <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap',
+                <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.6, whiteSpace: 'pre-wrap',
                   overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
                   {c.corrected_karte || c.generated_karte}
                 </p>

@@ -104,8 +104,8 @@ export default function PhrasesManager({ doctorId }) {
   return (
     <div>
       {/* PDF一括抽出 */}
-      <div style={{ marginBottom: 20, padding: 16, background: '#f0f7ff', border: '1px solid #bfdbfe', borderRadius: 10 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#1d4ed8', marginBottom: 8 }}>
+      <div style={{ marginBottom: 20, padding: 16, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>
           <Sparkles size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
           PDFから医療用語・略語を自動抽出
         </p>
@@ -117,8 +117,8 @@ export default function PhrasesManager({ doctorId }) {
             onChange={e => setFiles(Array.from(e.target.files))} />
           {files.length > 0 && (
             <>
-              <span style={{ fontSize: 12, color: '#64748b' }}>{files.length}件選択中</span>
-              <button type="button" onClick={() => setFiles([])} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}><X size={13} /></button>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{files.length}件選択中</span>
+              <button type="button" onClick={() => setFiles([])} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-faint)' }}><X size={13} /></button>
             </>
           )}
           <button className="btn btn-primary btn-sm" type="button" onClick={handleExtract}
@@ -127,12 +127,12 @@ export default function PhrasesManager({ doctorId }) {
           </button>
         </div>
         {extractProgress && (
-          <div style={{ fontSize: 12, color: '#1d4ed8' }}>
+          <div style={{ fontSize: 12, color: 'var(--primary)' }}>
             バッチ {extractProgress.current}/{extractProgress.total} 処理中...
           </div>
         )}
         {extractMsg && (
-          <p style={{ fontSize: 12, color: extractMsg.startsWith('✓') ? '#16a34a' : extractMsg.startsWith('エラー') ? '#dc2626' : '#1d4ed8', marginBottom: extracted.length > 0 ? 8 : 0 }}>
+          <p style={{ fontSize: 12, color: extractMsg.startsWith('✓') ? 'var(--primary)' : extractMsg.startsWith('エラー') ? 'var(--danger)' : 'var(--primary)', marginBottom: extracted.length > 0 ? 8 : 0 }}>
             {extractMsg}
           </p>
         )}
@@ -163,17 +163,17 @@ export default function PhrasesManager({ doctorId }) {
                   onClick={() => toggleSelect(i)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
-                    background: selected.has(i) ? '#eff6ff' : '#f8fafc',
-                    border: `1px solid ${selected.has(i) ? '#bfdbfe' : '#e2e8f0'}`,
+                    background: selected.has(i) ? 'var(--accent-weak)' : 'var(--surface2)',
+                    border: `1px solid ${selected.has(i) ? 'var(--border)' : 'var(--border)'}`,
                     borderRadius: 6, cursor: 'pointer',
                   }}
                 >
                   <input type="checkbox" checked={selected.has(i)} onChange={() => toggleSelect(i)}
                     style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>{t.trigger}</span>
-                  {t.reading && <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>({t.reading})</span>}
-                  <span style={{ fontSize: 12, color: '#374151' }}>→ {t.expansion}</span>
-                  <span style={{ fontSize: 11, color: '#64748b', marginLeft: 'auto', flexShrink: 0 }}>{t.category}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', background: 'var(--accent-weak)', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>{t.trigger}</span>
+                  {t.reading && <span style={{ fontSize: 11, color: 'var(--text-faint)', flexShrink: 0 }}>({t.reading})</span>}
+                  <span style={{ fontSize: 12, color: 'var(--text)' }}>→ {t.expansion}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto', flexShrink: 0 }}>{t.category}</span>
                 </div>
               ))}
             </div>
@@ -182,8 +182,8 @@ export default function PhrasesManager({ doctorId }) {
       </div>
 
       {/* 手動追加フォーム */}
-      <div style={{ marginBottom: 16, padding: 14, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 10 }}>手動追加</p>
+      <div style={{ marginBottom: 16, padding: 14, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>手動追加</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr 1fr auto', gap: 8, alignItems: 'end' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>略語・用語</label>
@@ -210,26 +210,26 @@ export default function PhrasesManager({ doctorId }) {
       </div>
 
       {/* 一覧 */}
-      {loading ? <p style={{ color: '#94a3b8', fontSize: 13 }}>読み込み中...</p>
+      {loading ? <p style={{ color: 'var(--text-faint)', fontSize: 13 }}>読み込み中...</p>
       : phrases.length === 0 ? (
-        <p style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: 20 }}>
+        <p style={{ color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: 20 }}>
           定型表現がまだ登録されていません
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {Object.entries(grouped).map(([cat, items]) => (
             <div key={cat}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', marginBottom: 6, textTransform: 'uppercase' }}>{cat}</p>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', marginBottom: 6, textTransform: 'uppercase' }}>{cat}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {items.map(p => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', padding: '2px 8px', borderRadius: 4, flexShrink: 0 }}>{p.trigger}</span>
-                      {p.reading && <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>({p.reading})</span>}
-                      <span style={{ fontSize: 12, color: '#374151' }}>→</span>
-                      <span style={{ fontSize: 12, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.expansion}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', background: 'var(--accent-weak)', padding: '2px 8px', borderRadius: 4, flexShrink: 0 }}>{p.trigger}</span>
+                      {p.reading && <span style={{ fontSize: 11, color: 'var(--text-faint)', flexShrink: 0 }}>({p.reading})</span>}
+                      <span style={{ fontSize: 12, color: 'var(--text)' }}>→</span>
+                      <span style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.expansion}</span>
                     </div>
-                    <button type="button" onClick={() => deletePhrase(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cbd5e1', flexShrink: 0 }}>
+                    <button type="button" onClick={() => deletePhrase(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--border)', flexShrink: 0 }}>
                       <Trash2 size={13} />
                     </button>
                   </div>

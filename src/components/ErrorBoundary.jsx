@@ -10,10 +10,10 @@ export default class ErrorBoundary extends Component {
     if (this.state.error) {
       return (
         <div style={{ padding: 24 }}>
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 20 }}>
-            <p style={{ fontWeight: 700, color: '#dc2626', marginBottom: 8 }}>エラーが発生しました</p>
-            <p style={{ fontSize: 12, color: '#b91c1c', wordBreak: 'break-all' }}>{this.state.error.message}</p>
-            <button type="button" style={{ marginTop: 12, padding: '6px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}
+          <div style={{ background: 'var(--accent-weak)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+            <p style={{ fontWeight: 700, color: 'var(--danger)', marginBottom: 8 }}>エラーが発生しました</p>
+            <p style={{ fontSize: 12, color: 'var(--danger)', wordBreak: 'break-all' }}>{this.state.error.message}</p>
+            <button type="button" style={{ marginTop: 12, padding: '6px 16px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}
               onClick={() => this.setState({ error: null })}>再試行</button>
           </div>
         </div>
