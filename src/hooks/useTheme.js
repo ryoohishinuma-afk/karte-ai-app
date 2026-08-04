@@ -7,7 +7,7 @@ export function getInitialTheme() {
     const saved = localStorage.getItem(KEY)
     if (saved === 'light' || saved === 'dark') return saved
   } catch {}
-  return 'dark'
+  return 'light'  // 既定は診察室モード（白基調）。医療現場・デモ向け
 }
 
 // アプリ起動時に一度だけ呼び、data-themeを確定させる（描画チラつき防止）
