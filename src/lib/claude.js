@@ -1,18 +1,24 @@
-const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY
 const MODEL = 'claude-sonnet-4-6'
 const MODEL_HAIKU = 'claude-haiku-4-5-20251001'  // バッチ処理用（低コスト）
 
+// サーバー側プロキシ（/api/claude）を経由してAnthropicを呼ぶ。
+// APIキーはブラウザに一切渡らない（Vercel Functions側の環境変数のみに存在する）。
+async function callClaude(body) {
+  const response = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) {
+    const err = await response.text()
+    throw new Error(`Claude API エラー: ${err}`)
+  }
+  return response
+}
+
 // 音声文字起こし補正（足科専門用語）
 export async function correctFootClinicTranscript(rawTranscript) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
+  const response = await callClaude({
       model: MODEL_HAIKU,
       max_tokens: 1024,
       messages: [{
@@ -49,7 +55,6 @@ export async function correctFootClinicTranscript(rawTranscript) {
 【補正対象テキスト】
 ${rawTranscript}`,
       }],
-    }),
   })
   const data = await response.json()
   return data.content?.[0]?.text ?? rawTranscript
@@ -148,27 +153,13 @@ ${contentSection}
 
 上記をもとにカルテを生成してください。`
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 2048,
-      stream: true,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
+  const response = await callClaude({
+    model: MODEL,
+    max_tokens: 2048,
+    stream: true,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
   })
-
-  if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`Claude API エラー: ${err}`)
-  }
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
@@ -197,15 +188,7 @@ ${contentSection}
 
 // 書き癖プロファイル生成
 export async function analyzeStyle(samples) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
+  const response = await callClaude({
       model: MODEL,
       max_tokens: 2048,
       messages: [{
@@ -214,7 +197,6 @@ export async function analyzeStyle(samples) {
 
 ${samples.map((s, i) => `【サンプル${i + 1}】\n${s}`).join('\n\n')}`,
       }],
-    }),
   })
   const data = await response.json()
   return data.content?.[0]?.text ?? ''
@@ -227,15 +209,7 @@ export async function classifyKarteBatch(texts) {
   for (let i = 0; i < texts.length; i += BATCH) {
     const batch = texts.slice(i, i + BATCH)
     const combined = batch.map((t, j) => `【カルテ${j + 1}】\n${t.slice(0, 1500)}`).join('\n\n')
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
+    const response = await callClaude({
         model: MODEL_HAIKU,
         max_tokens: 1024,
         messages: [{
@@ -248,7 +222,6 @@ JSON配列のみ返してください（他のテキスト不要、必ず${batch
 
 ${combined}`,
         }],
-      }),
     })
     const data = await response.json()
     const text = data.content?.[0]?.text ?? ''
@@ -268,15 +241,7 @@ ${combined}`,
 // バッチ1件分の特徴抽出（Sonnet使用・原文引用つき）
 async function extractBatchFeatures(texts, visitType) {
   const combined = texts.map((t, i) => `【カルテ${i + 1}】\n${t.slice(0, 4000)}`).join('\n\n')
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
+  const response = await callClaude({
       model: MODEL,
       max_tokens: 1500,
       messages: [{
@@ -297,7 +262,6 @@ async function extractBatchFeatures(texts, visitType) {
 
 ${combined}`,
       }],
-    }),
   })
   const data = await response.json()
   return data.content?.[0]?.text ?? ''
@@ -308,15 +272,7 @@ export async function synthesizeStyleProfile(featuresList, existingProfile) {
   const allFeatures = featuresList
     .map(f => (f.visitType ? `＜${f.visitType}カルテの特徴＞\n${f.features}` : f.features ?? f))
     .join('\n\n---\n\n')
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
+  const response = await callClaude({
       model: MODEL,
       max_tokens: 4000,
       messages: [{
@@ -337,7 +293,6 @@ export async function synthesizeStyleProfile(featuresList, existingProfile) {
 【抽出された特徴】
 ${allFeatures}`,
       }],
-    }),
   })
   const data = await response.json()
   return data.content?.[0]?.text ?? ''
@@ -383,15 +338,7 @@ export async function extractMedicalTermsFromPDFs(texts, onProgress) {
     const batch = texts.slice(i, i + BATCH)
     const combined = batch.map((t, j) => `【カルテ${i + j + 1}】\n${t.slice(0, 800)}`).join('\n\n')
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
+    const response = await callClaude({
         model: MODEL_HAIKU,
         max_tokens: 1024,
         messages: [{
@@ -404,7 +351,6 @@ JSON配列のみ返してください（他のテキスト不要）：
 
 ${combined}`,
         }],
-      }),
     })
     const data = await response.json()
     const text = data.content?.[0]?.text ?? ''
@@ -437,15 +383,7 @@ export async function extractTemplatesFromPDFs(texts, onProgress) {
     const batch = texts.slice(i, i + BATCH)
     const combined = batch.map((t, j) => `【カルテ${i + j + 1}】\n${t.slice(0, 600)}`).join('\n\n')
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
+    const response = await callClaude({
         model: MODEL_HAIKU,
         max_tokens: 1024,
         messages: [{
@@ -456,7 +394,6 @@ export async function extractTemplatesFromPDFs(texts, onProgress) {
 
 ${combined}`,
         }],
-      }),
     })
     const data = await response.json()
     const text = data.content?.[0]?.text ?? ''
