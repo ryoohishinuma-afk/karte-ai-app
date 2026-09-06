@@ -7,6 +7,7 @@ import TemplatesManager from '../components/TemplatesManager'
 import ConsultationHistory from '../components/ConsultationHistory'
 import OutputFormatManager from '../components/OutputFormatManager'
 import ThemeToggle from '../components/ThemeToggle'
+import RetentionSettings from '../components/RetentionSettings'
 
 export default function AdminPage({ onBack }) {
   const { doctors, loading, createDoctor, updateDoctor, updateStyleProfile, updateOutputFormat, setActiveProfile, toggleSaveProfile, deleteProfileVersion, deleteDoctor } = useDoctors()
@@ -80,6 +81,8 @@ export default function AdminPage({ onBack }) {
       </header>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
+
+        <RetentionSettings />
 
         {/* 医師追加 */}
         <div className="card" style={{ marginBottom: 20 }}>

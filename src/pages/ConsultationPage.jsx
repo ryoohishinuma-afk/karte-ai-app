@@ -7,6 +7,7 @@ import { useTemplates } from '../hooks/useTemplates'
 import { useLayoutPreference } from '../hooks/useLayoutPreference'
 import { generateKarte, correctFootClinicTranscript } from '../lib/claude'
 import { fetchKarteExamples } from '../hooks/useLearningFiles'
+import { useAppSettings } from '../hooks/useAppSettings'
 import { supabase } from '../lib/supabase'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ThemeToggle from '../components/ThemeToggle'
@@ -19,11 +20,13 @@ function ConsultationInner() {
   const { phrases, applyPhrasesToTranscript } = usePhrases(doctor?.id)
   const { findMatching, incrementUseCount } = useTemplates(doctor?.id)
   const { layout, toggleLayout } = useLayoutPreference()
+  const { retentionHours } = useAppSettings()
 
   const [age, setAge] = useState('')
   const [gender, setGender] = useState(GENDERS[0])
   const [visitType, setVisitType] = useState('初診')
   const VISIT_TYPES = ['初診', '再診']
+  const [patientLabel, setPatientLabel] = useState('')
   const [chiefComplaint, setChiefComplaint] = useState('')
   const [mondsin, setMondsin] = useState('')
   const [generatedKarte, setGeneratedKarte] = useState('')
@@ -45,7 +48,7 @@ function ConsultationInner() {
   const karteRef = useRef(null)
 
   function currentPatientInfo() {
-    return { age, gender, visitType, chiefComplaint, mondsin }
+    return { age, gender, visitType, chiefComplaint, mondsin, patientLabel }
   }
 
   function restorePatientInfo(info) {
@@ -54,6 +57,7 @@ function ConsultationInner() {
     setVisitType(info.visitType)
     setChiefComplaint(info.chiefComplaint)
     setMondsin(info.mondsin)
+    setPatientLabel(info.patientLabel ?? '')
   }
 
   function makeLabel(info, segs) {
@@ -98,11 +102,14 @@ function ConsultationInner() {
         onDone: async () => {
           setGenerating(false)
           try {
+            const expiresAt = new Date(Date.now() + retentionHours * 60 * 60 * 1000).toISOString()
             const { data } = await supabase.from('consultations').insert({
               doctor_id: doctor.id, patient_age: age ? parseInt(age) : null,
               patient_gender: gender, visit_type: visitType, chief_complaint: chiefComplaint,
+              patient_label: patientLabel.trim() || null,
               transcript: [sourceTranscript, sourceMondsin].filter(Boolean).join('\n\n---問診---\n\n'),
               generated_karte: finalKarte,
+              expires_at: expiresAt,
             }).select('id').single()
             if (data?.id) setConsultationId(data.id)
           } catch {}
@@ -153,7 +160,7 @@ function ConsultationInner() {
     }
     reset(); setSegments([]); setGeneratedKarte('')
     setAge(''); setGender(GENDERS[0]); setVisitType('初診')
-    setChiefComplaint(''); setMondsin(''); setError(''); setMatchedTemplate(null)
+    setChiefComplaint(''); setMondsin(''); setPatientLabel(''); setError(''); setMatchedTemplate(null)
   }
 
   function handleResumeSession(sessionId) {
@@ -167,7 +174,7 @@ function ConsultationInner() {
   function handleReset() {
     reset(); setSegments([]); setGeneratedKarte('')
     setAge(''); setGender(GENDERS[0]); setVisitType('初診')
-    setChiefComplaint(''); setMondsin(''); setError(''); setMatchedTemplate(null)
+    setChiefComplaint(''); setMondsin(''); setPatientLabel(''); setError(''); setMatchedTemplate(null)
   }
 
   // ---- JSX ブロック（関数コンポーネントにしない） ----
@@ -231,6 +238,11 @@ function ConsultationInner() {
             {GENDERS.map(g => <option key={g}>{g}</option>)}
           </select>
         </div>
+      </div>
+      <div className="form-group" style={{ marginBottom: 12 }}>
+        <label>識別メモ（任意・自分だけ分かればOK）</label>
+        <input type="text" value={patientLabel} onChange={e => setPatientLabel(e.target.value)} placeholder="例: カルテ番号・診察順・イニシャルなど" autoComplete="off" />
+        <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>朝まとめて生成した後、誰の分か見分けるための項目です。患者名は入力しないでください。</p>
       </div>
       <div className="form-group" style={{ marginBottom: 12 }}>
         <label>主訴</label>

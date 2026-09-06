@@ -1,7 +1,16 @@
 import { useState } from 'react'
-import { Check, X, Pencil, Trash2, Brain, RefreshCw } from 'lucide-react'
+import { Check, X, Pencil, Trash2, Brain, RefreshCw, Copy, Clock } from 'lucide-react'
 import { useConsultations } from '../hooks/useConsultations'
 import { analyzeStyle } from '../lib/claude'
+
+function timeUntilExpiry(expiresAt) {
+  if (!expiresAt) return null
+  const ms = new Date(expiresAt).getTime() - Date.now()
+  if (ms <= 0) return '期限切れ'
+  const h = Math.floor(ms / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  return h > 0 ? `あと${h}時間${m}分で自動削除` : `あと${m}分で自動削除`
+}
 
 export default function ConsultationHistory({ doctor, onProfileUpdated }) {
   const { consultations, loading, approveConsultation, saveCorrection, deleteConsultation, getApprovedSamples } = useConsultations(doctor.id)
@@ -10,6 +19,13 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
   const [editText, setEditText] = useState('')
   const [relearning, setRelearning] = useState(false)
   const [relearningMsg, setRelearningMsg] = useState('')
+  const [copiedId, setCopiedId] = useState(null)
+
+  async function handleCopy(c) {
+    await navigator.clipboard.writeText(c.corrected_karte || c.generated_karte || '')
+    setCopiedId(c.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   function startEdit(c) {
     setEditingId(c.id)
@@ -97,6 +113,11 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
                   <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                     {new Date(c.created_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
+                  {c.patient_label && (
+                    <span style={{ fontSize: 11, background: 'var(--surface2)', color: 'var(--text)', padding: '1px 6px', borderRadius: 4, fontWeight: 700, border: '1px solid var(--border)' }}>
+                      {c.patient_label}
+                    </span>
+                  )}
                   {c.chief_complaint && (
                     <span style={{ fontSize: 11, background: 'var(--accent-weak)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>
                       {c.chief_complaint}
@@ -111,8 +132,21 @@ export default function ConsultationHistory({ doctor, onProfileUpdated }) {
                   {c.corrected_karte && (
                     <span style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 600 }}>✎ 修正あり</span>
                   )}
+                  {timeUntilExpiry(c.expires_at) && (
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Clock size={10} /> {timeUntilExpiry(c.expires_at)}
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
+                  <button
+                    type="button"
+                    title="コピー"
+                    onClick={() => handleCopy(c)}
+                    style={{ background: copiedId === c.id ? 'var(--accent-weak)' : 'none', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: copiedId === c.id ? 'var(--primary)' : 'var(--text-muted)' }}
+                  >
+                    <Copy size={12} />
+                  </button>
                   <button
                     type="button"
                     title={c.is_approved ? '承認取り消し' : '承認する'}
