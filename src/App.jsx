@@ -10,7 +10,7 @@ function AppContent() {
   const [showAdmin, setShowAdmin] = useState(false)
 
   if (showAdmin) return <AdminPage onBack={() => setShowAdmin(false)} />
-  if (doctor) return <ConsultationPage />
+  if (doctor) return <ConsultationPage onAdmin={() => setShowAdmin(true)} />
   return <SelectDoctorPage onAdmin={() => setShowAdmin(true)} />
 }
 

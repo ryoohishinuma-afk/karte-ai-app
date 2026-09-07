@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 export function useLayoutPreference() {
   const [layout, setLayout] = useState(() =>
-    localStorage.getItem('karte-layout') || 'split'
+    localStorage.getItem('karte-layout') || 'sidebar'
   )
 
   function toggleLayout() {

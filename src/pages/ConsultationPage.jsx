@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Mic, MicOff, Sparkles, Copy, Check, RotateCcw, LogOut, Columns2, PanelLeft } from 'lucide-react'
+import { Mic, MicOff, Sparkles, Copy, Check, RotateCcw, LogOut, Columns2, PanelLeft, Settings, UserPlus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder'
 import { usePhrases } from '../hooks/usePhrases'
@@ -14,7 +14,7 @@ import ThemeToggle from '../components/ThemeToggle'
 
 const GENDERS = ['男性', '女性', 'その他']
 
-function ConsultationInner() {
+function ConsultationInner({ onAdmin }) {
   const { doctor, logout } = useAuth()
   const { isRecording, transcript, interimText, recError, start, stop, reset, setTranscript } = useVoiceRecorder()
   const { phrases, applyPhrasesToTranscript } = usePhrases(doctor?.id)
@@ -61,12 +61,13 @@ function ConsultationInner() {
   }
 
   function makeLabel(info, segs) {
+    if (info.patientLabel?.trim()) return info.patientLabel.trim()
     const parts = []
     if (info.age) parts.push(`${info.age}歳`)
     if (info.gender) parts.push(info.gender)
     if (info.chiefComplaint) parts.push(info.chiefComplaint)
     const base = parts.length ? parts.join(' ') : '患者'
-    return `${base}（録音${segs.length}件保留）`
+    return segs.length > 0 ? `${base}（録音${segs.length}件保留）` : base
   }
 
   async function handleGenerate(useTemplateOnly = false) {
@@ -154,11 +155,20 @@ function ConsultationInner() {
       setCorrecting(false)
     }
     const savedSegments = text.trim() ? [...segments, text] : [...segments]
-    if (savedSegments.length > 0) {
+    const hasKarte = generatedKarte.trim().length > 0
+    // 録音・生成済みカルテ・識別メモのいずれかがあれば保留リストに退避する（新規作成ボタンとしても使う）
+    if (savedSegments.length > 0 || hasKarte || patientLabel.trim()) {
       const info = currentPatientInfo()
-      setSessions(prev => [...prev, { id: Date.now(), label: makeLabel(info, savedSegments), segments: savedSegments, patientInfo: info }])
+      setSessions(prev => [...prev, {
+        id: Date.now(),
+        label: makeLabel(info, savedSegments),
+        segments: savedSegments,
+        patientInfo: info,
+        generatedKarte,
+        consultationId,
+      }])
     }
-    reset(); setSegments([]); setGeneratedKarte('')
+    reset(); setSegments([]); setGeneratedKarte(''); setConsultationId(null)
     setAge(''); setGender(GENDERS[0]); setVisitType('初診')
     setChiefComplaint(''); setMondsin(''); setPatientLabel(''); setError(''); setMatchedTemplate(null)
   }
@@ -167,7 +177,10 @@ function ConsultationInner() {
     const session = sessions.find(s => s.id === sessionId)
     if (!session) return
     restorePatientInfo(session.patientInfo)
-    setSegments(session.segments); setGeneratedKarte(''); setError(''); setMatchedTemplate(null)
+    setSegments(session.segments)
+    setGeneratedKarte(session.generatedKarte ?? '')
+    setConsultationId(session.consultationId ?? null)
+    setError(''); setMatchedTemplate(null)
     setSessions(prev => prev.filter(s => s.id !== sessionId))
   }
 
@@ -204,6 +217,11 @@ function ConsultationInner() {
         }}>
           {layout === 'split' ? <PanelLeft size={15} /> : <Columns2 size={15} />}
         </button>
+        {onAdmin && (
+          <button className="btn btn-outline btn-sm" type="button" onClick={onAdmin} title="管理画面">
+            <Settings size={13} /> 管理
+          </button>
+        )}
         <button className="btn btn-outline btn-sm" type="button" onClick={logout}>
           <LogOut size={13} /> 変更
         </button>
@@ -213,7 +231,12 @@ function ConsultationInner() {
 
   const patientFormJsx = (
     <div className="card">
-      <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, color: 'var(--text)' }}>患者情報</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>患者情報</h2>
+        <button className="btn btn-primary btn-sm" type="button" onClick={handleSwitchPatient} title="今の内容を保留して新しい患者を始める">
+          <UserPlus size={13} /> 新規作成
+        </button>
+      </div>
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {VISIT_TYPES.map(v => (
@@ -398,22 +421,33 @@ function ConsultationInner() {
       <div style={{ padding: '14px 12px 8px', borderBottom: '1px solid var(--border2)' }}>
         <div style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 }}>現在の患者</div>
         <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
+          {patientLabel.trim() && <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{patientLabel.trim()}</div>}
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{chiefComplaint || '—'}</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{[age ? `${age}歳` : null, gender, visitType].filter(Boolean).join(' · ')}</div>
           {segments.length > 0 && <div style={{ fontSize: 10, color: 'var(--primary)', marginTop: 4 }}>録音 {segments.length}件保留中</div>}
+          {generatedKarte.trim() && <div style={{ fontSize: 10, color: 'var(--primary)', marginTop: 4 }}>✓ カルテ生成済み</div>}
         </div>
       </div>
       {sessions.length > 0 && (
         <div style={{ padding: '12px 12px 8px' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 }}>保留中 ({sessions.length})</div>
+          <div style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 }}>保留中の患者 ({sessions.length})</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {sessions.map(s => (
               <div key={s.id} onClick={() => handleResumeSession(s.id)} style={{
                 padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
                 background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)',
               }}>
-                <div style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 500 }}>{s.label}</div>
-                {s.segments.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 500 }}>{s.label}</span>
+                  {s.generatedKarte?.trim() && (
+                    <span style={{ fontSize: 10, color: 'var(--primary)', background: 'rgba(16,185,129,0.15)', padding: '0 5px', borderRadius: 4, fontWeight: 700 }}>生成済</span>
+                  )}
+                </div>
+                {s.generatedKarte?.trim() ? (
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.5, maxHeight: 60, overflowY: 'auto', wordBreak: 'break-all' }}>
+                    {s.generatedKarte.slice(0, 100)}{s.generatedKarte.length > 100 ? '…' : ''}
+                  </div>
+                ) : s.segments.length > 0 && (
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.5, maxHeight: 60, overflowY: 'auto', wordBreak: 'break-all' }}>
                     {s.segments.join(' ').slice(0, 120)}{s.segments.join(' ').length > 120 ? '…' : ''}
                   </div>
@@ -489,10 +523,10 @@ function ConsultationInner() {
   )
 }
 
-export default function ConsultationPage() {
+export default function ConsultationPage({ onAdmin }) {
   return (
     <ErrorBoundary>
-      <ConsultationInner />
+      <ConsultationInner onAdmin={onAdmin} />
     </ErrorBoundary>
   )
 }
